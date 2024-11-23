@@ -30,13 +30,20 @@ public class Song {
             if(tag != null){
                 songTitle = tag.getFirst(FieldKey.TITLE);
                 songArtist = tag.getFirst(FieldKey.ARTIST);
-            }else{
-                // could not read through mp3 file's meta data
-                songTitle = "N/A";
-                songArtist = "N/A";
+            }
+            if (songTitle == null || songTitle.isEmpty()) {
+                songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
+            }
+            if (songArtist == null || songArtist.isEmpty()) {
+                songArtist = null;
             }
         }catch(Exception e){
             e.printStackTrace();
+            // Default fallback if metadata or file reading fails
+            songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
+            songArtist = "Unknown Artist";
+            songLength = "00:00";
+            frameRatePerMilliseconds = 0;
         }
     }
 
