@@ -12,8 +12,10 @@ import java.util.Hashtable;
 
 public class MusicPlayerGUI extends JFrame {
     // color configurations
-    public static final Color FRAME_COLOR = Color.WHITE;
-    public static final Color TEXT_COLOR = Color.BLACK;
+
+    //TODO update the colors of the frame and user interface
+    public static final Color FRAME_COLOR = Color.BLACK;
+    public static final Color TEXT_COLOR = Color.WHITE;
 
     private MusicPlayer musicPlayer;
 
@@ -25,7 +27,7 @@ public class MusicPlayerGUI extends JFrame {
     private JSlider playbackSlider;
 
     public MusicPlayerGUI(){
-        // calls JFrame constructor to configure out gui and set the title heaader to "Music Player"
+        // calls JFrame constructor to configure out gui and set the title header to "Music Player"
         super("Byte Beats");
 
         // set the width and height
