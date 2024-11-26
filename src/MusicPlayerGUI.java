@@ -25,6 +25,7 @@ public class MusicPlayerGUI extends JFrame {
     private JLabel songTitle, songArtist;
     private JPanel playbackBtns;
     private JSlider playbackSlider;
+    private JLabel timerLabel;
 
     public MusicPlayerGUI(){
         // calls JFrame constructor to configure out gui and set the title header to "Music Player"
@@ -58,7 +59,20 @@ public class MusicPlayerGUI extends JFrame {
         // filter file chooser to only see .mp3 files
         jFileChooser.setFileFilter(new FileNameExtensionFilter("MP3", "mp3"));
 
+        timerLabel = new JLabel("00:00");
+        timerLabel.setFont(new Font("Dialog", Font.BOLD, 18));
+        timerLabel.setForeground(TEXT_COLOR);
+        timerLabel.setBounds(getWidth() / 2 - 40, 420, 80, 30); // Position it appropriately
+        add(timerLabel);
+
         addGuiComponents();
+    }
+
+    public void updateDisplayTimer(int minutes, int seconds) {
+        // Update the display with the formatted timer
+        String formattedTime = String.format("%02d:%02d", minutes, seconds);
+        // Assume you have a JLabel or similar component for the timer display
+        timerLabel.setText(formattedTime);
     }
 
     private void addGuiComponents(){
@@ -69,6 +83,14 @@ public class MusicPlayerGUI extends JFrame {
         JLabel songImage = new JLabel(loadImage("src/assets/vinyl.png"));
         songImage.setBounds(10, 20, getWidth() - 35/2, 210);
         add(songImage);
+
+        musicPlayer.addSongTimeListener(new MusicPlayer.SongTimeListener() {
+            @Override
+            public void onSongTimeUpdate(int currentTime) {
+                updateTimerLabel(currentTime);
+                updatePlaybackSliderPosition(currentTime);
+            }
+        });
 
         // song title
         songTitle = new JLabel("Song Title");
@@ -122,6 +144,24 @@ public class MusicPlayerGUI extends JFrame {
 
         // playback buttons (i.e. previous, play, next)
         addPlaybackBtns();
+
+
+    }
+
+    private void updateTimerLabel(int currentTimeInMilli) {
+        // Convert current time in milliseconds to minutes and seconds
+        int minutes = currentTimeInMilli / 60000;
+        int seconds = (currentTimeInMilli % 60000) / 1000;
+        String timeString = String.format("%02d:%02d", minutes, seconds);
+
+        // Update the timer label with the formatted time
+        timerLabel.setText(timeString);
+    }
+
+    private void updatePlaybackSliderPosition(int currentTimeInMilli) {
+        // Update the slider value based on current time in milliseconds
+        int frame = (int) (currentTimeInMilli * 2.08 * musicPlayer.getCurrentSong().getFrameRatePerMilliseconds());
+        setPlaybackSliderValue(frame);
     }
 
     private void addToolbar(){

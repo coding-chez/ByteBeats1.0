@@ -2,8 +2,10 @@ import javazoom.jl.player.advanced.AdvancedPlayer;
 import javazoom.jl.player.advanced.PlaybackEvent;
 import javazoom.jl.player.advanced.PlaybackListener;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MusicPlayer extends PlaybackListener {
     // this will be used to update isPaused more synchronously
@@ -45,6 +47,8 @@ public class MusicPlayer extends PlaybackListener {
     public void setCurrentTimeInMilli(int timeInMilli){
         currentTimeInMilli = timeInMilli;
     }
+    private List<SongTimeListener> songTimeListeners = new ArrayList<>();
+
 
     // constructor
     public MusicPlayer(MusicPlayerGUI musicPlayerGUI){
@@ -254,42 +258,75 @@ public class MusicPlayer extends PlaybackListener {
     }
 
     // create a thread that will handle updating the slider
-    private void startPlaybackSliderThread(){
+    private void startPlaybackSliderThread() {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if(isPaused){
-                    try{
-                        // wait till it gets notified by other thread to continue
-                        // makes sure that isPaused boolean flag updates to false before continuing
-                        synchronized(playSignal){
+                if (isPaused) {
+                    try {
+                        // Wait until it gets notified to continue
+                        synchronized (playSignal) {
                             playSignal.wait();
                         }
-                    }catch(Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
 
-                while(!isPaused && !songFinished && !pressedNext && !pressedPrev){
-                    try{
-                        // increment current time milli
+                // Get total song length in milliseconds
+                long songLengthInMilli = currentSong.getMp3File().getLengthInMilliseconds();
+
+                while (!isPaused && !songFinished && !pressedNext && !pressedPrev && currentTimeInMilli <= songLengthInMilli) {
+                    try {
+                        // Increment current time in milliseconds
                         currentTimeInMilli++;
 
-                        // calculate into frame value
-                        int calculatedFrame = (int) ((double) currentTimeInMilli * 2.08 * currentSong.getFrameRatePerMilliseconds());
+                        // Calculate frame based on actual song length and frame rate
+                        int calculatedFrame = (int) ((double) currentTimeInMilli * currentSong.getFrameRatePerMilliseconds());
 
-                        // update gui
-                        musicPlayerGUI.setPlaybackSliderValue(calculatedFrame);
+                        // Update the playback slider and timer on the EDT
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                // Update the playback slider
+                                musicPlayerGUI.setPlaybackSliderValue(calculatedFrame);
 
-                        // mimic 1 millisecond using thread.sleep
+                                // Update the display timer (in minutes:seconds format)
+                                int minutes = currentTimeInMilli / 60000;
+                                int seconds = (currentTimeInMilli % 60000) / 1000;
+                                musicPlayerGUI.updateDisplayTimer(minutes, seconds);
+                            }
+                        });
+
+                        // Sleep for 1 millisecond to mimic time progression
                         Thread.sleep(1);
-                    }catch(Exception e){
+
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
+
+                // Mark song as finished once it completes
+                songFinished = true;
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Final update when the song finishes (set timer to the actual song length)
+                        int minutes = (int) (songLengthInMilli / 60000);
+                        int seconds = (int) ((songLengthInMilli % 60000) / 1000);
+                        musicPlayerGUI.updateDisplayTimer(minutes, seconds);
+                        musicPlayerGUI.setPlaybackSliderValue((int) songLengthInMilli);
+                    }
+                });
             }
         }).start();
     }
+
+
+
+
+
+
 
     @Override
     public void playbackStarted(PlaybackEvent evt) {
@@ -327,6 +364,26 @@ public class MusicPlayer extends PlaybackListener {
                 }
             }
         }
+        musicPlayerGUI.setPlaybackSliderValue(currentTimeInMilli);
+    }
+
+    public interface SongTimeListener {
+        void onSongTimeUpdate(int currentTimeInMilli);
+    }
+
+    public void addSongTimeListener(SongTimeListener listener) {
+        songTimeListeners.add(listener);
+    }
+
+    private void notifySongTimeListeners(int currentTimeInMilli) {
+        for (SongTimeListener listener : songTimeListeners) {
+            listener.onSongTimeUpdate(currentTimeInMilli);
+        }
+    }
+
+    // Call this method periodically (e.g., in a timer or during song playback loop)
+    public void updateSongTime(int currentTimeInMilli) {
+        notifySongTimeListeners(currentTimeInMilli);
     }
 }
 
