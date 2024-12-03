@@ -28,51 +28,35 @@ public class MusicPlayerGUI extends JFrame {
     private JLabel timerLabel;
 
     public MusicPlayerGUI(){
-        // calls JFrame constructor to configure out gui and set the title header to "Music Player"
         super("Byte Beats");
-
-        // set the width and height
         setSize(400, 600);
-
-        // end process when app is closed
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-
-        // launch the app at the center of the screen
         setLocationRelativeTo(null);
-
-        // prevent the app from being resized
         setResizable(false);
-
-        // set layout to null which allows us to control the (x, y) coordinates of our components
-        // and also set the height and width
         setLayout(null);
-
-        // change the frame color
         getContentPane().setBackground(FRAME_COLOR);
 
         musicPlayer = new MusicPlayer(this);
         jFileChooser = new JFileChooser();
-
-        // set a default path for file explorer
         jFileChooser.setCurrentDirectory(new File("src/assets"));
-
-        // filter file chooser to only see .mp3 files
         jFileChooser.setFileFilter(new FileNameExtensionFilter("MP3", "mp3"));
 
-        timerLabel = new JLabel("00:00");
-        timerLabel.setFont(new Font("Dialog", Font.BOLD, 18));
+        // Initialize and position the timer label properly
+        timerLabel = new JLabel("00:00 / 00:00");
+        timerLabel.setFont(new Font("Dialog", Font.BOLD, 16));
         timerLabel.setForeground(TEXT_COLOR);
-        timerLabel.setBounds(getWidth() / 2 - 40, 420, 80, 30); // Position it appropriately
+        timerLabel.setBounds(getWidth()/2 - 100/2, 340, 100, 20);
+        timerLabel.setHorizontalAlignment(SwingConstants.CENTER);
         add(timerLabel);
 
         addGuiComponents();
     }
 
     public void updateDisplayTimer(int minutes, int seconds) {
-        // Update the display with the formatted timer
-        String formattedTime = String.format("%02d:%02d", minutes, seconds);
-        // Assume you have a JLabel or similar component for the timer display
-        timerLabel.setText(formattedTime);
+        if (timerLabel != null) {
+            String formattedTime = String.format("%02d:%02d", minutes, seconds);
+            SwingUtilities.invokeLater(() -> timerLabel.setText(formattedTime));
+        }
     }
 
     private void addGuiComponents(){
@@ -149,19 +133,25 @@ public class MusicPlayerGUI extends JFrame {
     }
 
     private void updateTimerLabel(int currentTimeInMilli) {
-        // Convert current time in milliseconds to minutes and seconds
-        int minutes = currentTimeInMilli / 60000;
-        int seconds = (currentTimeInMilli % 60000) / 1000;
-        String timeString = String.format("%02d:%02d", minutes, seconds);
+        if (musicPlayer.getCurrentSong() != null) {
+            long totalDurationInMilli = musicPlayer.getCurrentSong().getDurationInMilli();
+            int currentMinutes = currentTimeInMilli / 60000;
+            int currentSeconds = (currentTimeInMilli % 60000) / 1000;
+            int totalMinutes = (int)(totalDurationInMilli / 60000);
+            int totalSeconds = (int)((totalDurationInMilli % 60000) / 1000);
 
-        // Update the timer label with the formatted time
-        timerLabel.setText(timeString);
+            String timeString = String.format("%02d:%02d / %02d:%02d",
+                    currentMinutes, currentSeconds, totalMinutes, totalSeconds);
+
+            SwingUtilities.invokeLater(() -> timerLabel.setText(timeString));
+        }
     }
 
     private void updatePlaybackSliderPosition(int currentTimeInMilli) {
-        // Update the slider value based on current time in milliseconds
-        int frame = (int) (currentTimeInMilli * 2.08 * musicPlayer.getCurrentSong().getFrameRatePerMilliseconds());
-        setPlaybackSliderValue(frame);
+        if (musicPlayer.getCurrentSong() != null) {
+            int frame = (int)(currentTimeInMilli * musicPlayer.getCurrentSong().getFrameRatePerMilliseconds());
+            SwingUtilities.invokeLater(() -> setPlaybackSliderValue(frame));
+        }
     }
 
     private void addToolbar(){
@@ -184,30 +174,35 @@ public class MusicPlayerGUI extends JFrame {
         loadSong.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // an integer is returned to us to let us know what the user did
+                // Show the file chooser to select an MP3 file
                 int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
                 File selectedFile = jFileChooser.getSelectedFile();
 
-                // this means that we are also checking to see if the user pressed the "open" button
-                if(result == JFileChooser.APPROVE_OPTION && selectedFile != null){
-                    // create a song obj based on selected file
+                // If the user presses the "open" button and selects a valid file
+                if (result == JFileChooser.APPROVE_OPTION && selectedFile != null) {
+                    // Create a Song object based on the selected file path
                     Song song = new Song(selectedFile.getPath());
 
-                    // load song in music player
+                    // Debugging: Print song details
+                    System.out.println("Loaded song: " + song.getSongTitle() + " by " + song.getSongArtist());
+                    System.out.println("Song Duration: " + song.getSongLength());
+
+                    // Load the song into the music player
                     musicPlayer.loadSong(song);
 
-                    // update song title and artist
+                    // Update the song title and artist in the GUI
                     updateSongTitleAndArtist(song);
 
-                    // update playback slider
+                    // Update the playback slider (this assumes it's implemented)
                     updatePlaybackSlider(song);
 
-                    // toggle on pause button and toggle off play button
+                    // Toggle on pause button and off play button
                     enablePauseButtonDisablePlayButton();
                 }
             }
         });
         songMenu.add(loadSong);
+
 
         // now we will add the playlist menu
         JMenu playlistMenu = new JMenu("Playlist");
@@ -392,6 +387,13 @@ public class MusicPlayerGUI extends JFrame {
         // could not find resource
         return null;
     }
+
+    public void setTimerLabel(String time) {
+        if (timerLabel != null) {
+            SwingUtilities.invokeLater(() -> timerLabel.setText(time));
+        }
+    }
+
 }
 
 

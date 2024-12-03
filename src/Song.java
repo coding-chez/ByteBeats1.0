@@ -17,17 +17,17 @@ public class Song {
 
     public Song(String filePath){
         this.filePath = filePath;
-        try{
+        try {
             mp3File = new Mp3File(filePath);
             frameRatePerMilliseconds = (double) mp3File.getFrameCount() / mp3File.getLengthInMilliseconds();
-            songLength = convertToSongLengthFormat();
+            songLength = convertToSongLengthFormat();  // Will correctly set the song length
 
             // use the jaudiotagger library to create an audiofile obj to read mp3 file's information
             AudioFile audioFile = AudioFileIO.read(new File(filePath));
 
             // read through the meta data of the audio file
             Tag tag =  audioFile.getTag();
-            if(tag != null){
+            if(tag != null) {
                 songTitle = tag.getFirst(FieldKey.TITLE);
                 songArtist = tag.getFirst(FieldKey.ARTIST);
             }
@@ -35,17 +35,20 @@ public class Song {
                 songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
             }
             if (songArtist == null || songArtist.isEmpty()) {
-                songArtist = null;
+                songArtist = "Unknown Artist";
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-            // Default fallback if metadata or file reading fails
+            // Set reasonable default values when an exception occurs
             songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
             songArtist = "Unknown Artist";
+
+            // Set a default song length as '00:00' in case of failure to read duration
             songLength = "00:00";
             frameRatePerMilliseconds = 0;
         }
     }
+
 
     private String convertToSongLengthFormat(){
         long minutes = mp3File.getLengthInSeconds() / 60;
@@ -74,6 +77,14 @@ public class Song {
 
     public Mp3File getMp3File(){return mp3File;}
     public double getFrameRatePerMilliseconds(){return frameRatePerMilliseconds;}
+
+    public long getDurationInMilli() {
+        if (mp3File != null) {
+            return mp3File.getLengthInMilliseconds();
+        }
+        return 0; // Return 0 if the mp3File is null or there's an issue
+    }
+
 }
 
 
