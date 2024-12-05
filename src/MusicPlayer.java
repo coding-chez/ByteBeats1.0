@@ -188,6 +188,7 @@ public class MusicPlayer extends PlaybackListener {
         }).start();
     }
 
+
     private void startPlaybackSliderThread() {
         Thread sliderThread = new Thread(() -> {
             if (isPaused) {
