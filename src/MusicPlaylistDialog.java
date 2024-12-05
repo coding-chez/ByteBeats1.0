@@ -18,6 +18,8 @@ public class MusicPlaylistDialog extends JDialog {
         this.musicPlayerGUI = musicPlayerGUI;
         songPaths = new ArrayList<>();
 
+
+
         // configure dialog
         setTitle("Create Playlist");
         setSize(400, 400);
