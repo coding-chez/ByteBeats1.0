@@ -13,7 +13,7 @@ import java.util.Hashtable;
 public class MusicPlayerGUI extends JFrame {
     // color configurations
 
-    //TODO update the colors of the frame and user interface
+    //Tcolors of the frame and user interface
     public static final Color FRAME_COLOR = Color.BLACK;
     public static final Color TEXT_COLOR = Color.WHITE;
 
@@ -52,12 +52,12 @@ public class MusicPlayerGUI extends JFrame {
         addGuiComponents();
     }
 
-    public void updateDisplayTimer(int minutes, int seconds) {
-        if (timerLabel != null) {
-            String formattedTime = String.format("%02d:%02d", minutes, seconds);
-            SwingUtilities.invokeLater(() -> timerLabel.setText(formattedTime));
-        }
-    }
+//    public void updateDisplayTimer(int minutes, int seconds) {
+//        if (timerLabel != null) {
+//            String formattedTime = String.format("%02d:%02d", minutes, seconds);
+//            SwingUtilities.invokeLater(() -> timerLabel.setText(formattedTime));
+//        }
+//    }
 
     private void addGuiComponents(){
         // add toolbar
@@ -68,12 +68,9 @@ public class MusicPlayerGUI extends JFrame {
         songImage.setBounds(10, 20, getWidth() - 35/2, 210);
         add(songImage);
 
-        musicPlayer.addSongTimeListener(new MusicPlayer.SongTimeListener() {
-            @Override
-            public void onSongTimeUpdate(int currentTime) {
-                updateTimerLabel(currentTime);
-                updatePlaybackSliderPosition(currentTime);
-            }
+        musicPlayer.addSongTimeListener(currentTime -> {
+            updateTimerLabel(currentTime);
+            updatePlaybackSliderPosition(currentTime);
         });
 
         // song title
@@ -171,34 +168,31 @@ public class MusicPlayerGUI extends JFrame {
 
         // add the "load song" item in the songMenu
         JMenuItem loadSong = new JMenuItem("Load Song");
-        loadSong.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Show the file chooser to select an MP3 file
-                int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
-                File selectedFile = jFileChooser.getSelectedFile();
+        loadSong.addActionListener(e -> {
+            // Show the file chooser to select an MP3 file
+            int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
+            File selectedFile = jFileChooser.getSelectedFile();
 
-                // If the user presses the "open" button and selects a valid file
-                if (result == JFileChooser.APPROVE_OPTION && selectedFile != null) {
-                    // Create a Song object based on the selected file path
-                    Song song = new Song(selectedFile.getPath());
+            // If the user presses the "open" button and selects a valid file
+            if (result == JFileChooser.APPROVE_OPTION && selectedFile != null) {
+                // Create a Song object based on the selected file path
+                Song song = new Song(selectedFile.getPath());
 
-                    // Debugging: Print song details
-                    System.out.println("Loaded song: " + song.getSongTitle() + " by " + song.getSongArtist());
-                    System.out.println("Song Duration: " + song.getSongLength());
+                // Debugging: Print song details
+                System.out.println("Loaded song: " + song.getSongTitle() + " by " + song.getSongArtist());
+                System.out.println("Song Duration: " + song.getSongLength());
 
-                    // Load the song into the music player
-                    musicPlayer.loadSong(song);
+                // Load the song into the music player
+                musicPlayer.loadSong(song);
 
-                    // Update the song title and artist in the GUI
-                    updateSongTitleAndArtist(song);
+                // Update the song title and artist in the GUI
+                updateSongTitleAndArtist(song);
 
-                    // Update the playback slider (this assumes it's implemented)
-                    updatePlaybackSlider(song);
+                // Update the playback slider (this assumes it's implemented)
+                updatePlaybackSlider(song);
 
-                    // Toggle on pause button and off play button
-                    enablePauseButtonDisablePlayButton();
-                }
+                // Toggle on pause button and off play button
+                enablePauseButtonDisablePlayButton();
             }
         });
         songMenu.add(loadSong);
@@ -210,33 +204,27 @@ public class MusicPlayerGUI extends JFrame {
 
         // then add the items to the playlist menu
         JMenuItem createPlaylist = new JMenuItem("Create Playlist");
-        createPlaylist.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // load music playlist dialog
-                new MusicPlaylistDialog(MusicPlayerGUI.this).setVisible(true);
-            }
+        createPlaylist.addActionListener(e -> {
+            // load music playlist dialog
+            new MusicPlaylistDialog(MusicPlayerGUI.this).setVisible(true);
         });
         playlistMenu.add(createPlaylist);
 
         JMenuItem loadPlaylist = new JMenuItem("Load Playlist");
-        loadPlaylist.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser jFileChooser = new JFileChooser();
-                jFileChooser.setFileFilter(new FileNameExtensionFilter("Playlist", "txt"));
-                jFileChooser.setCurrentDirectory(new File("src/assets"));
+        loadPlaylist.addActionListener(e -> {
+            JFileChooser jFileChooser = new JFileChooser();
+            jFileChooser.setFileFilter(new FileNameExtensionFilter("Playlist", "txt"));
+            jFileChooser.setCurrentDirectory(new File("src/assets"));
 
-                int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
-                File selectedFile = jFileChooser.getSelectedFile();
+            int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
+            File selectedFile = jFileChooser.getSelectedFile();
 
-                if(result == JFileChooser.APPROVE_OPTION && selectedFile != null){
-                    // stop the music
-                    musicPlayer.stopSong();
+            if(result == JFileChooser.APPROVE_OPTION && selectedFile != null){
+                // stop the music
+                musicPlayer.stopSong();
 
-                    // load playlist
-                    musicPlayer.loadPlaylist(selectedFile);
-                }
+                // load playlist
+                musicPlayer.loadPlaylist(selectedFile);
             }
         });
         playlistMenu.add(loadPlaylist);
@@ -253,12 +241,9 @@ public class MusicPlayerGUI extends JFrame {
         JButton prevButton = new JButton(loadImage("src/assets/previous.png"));
         prevButton.setBorderPainted(false);
         prevButton.setBackground(null);
-        prevButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // go to the previous song
-                musicPlayer.prevSong();
-            }
+        prevButton.addActionListener(e -> {
+            // go to the previous song
+            musicPlayer.prevSong();
         });
         playbackBtns.add(prevButton);
 
@@ -266,15 +251,12 @@ public class MusicPlayerGUI extends JFrame {
         JButton playButton = new JButton(loadImage("src/assets/play.png"));
         playButton.setBorderPainted(false);
         playButton.setBackground(null);
-        playButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // toggle off play button and toggle on pause button
-                enablePauseButtonDisablePlayButton();
+        playButton.addActionListener(e -> {
+            // toggle off play button and toggle on pause button
+            enablePauseButtonDisablePlayButton();
 
-                // play or resume song
-                musicPlayer.playCurrentSong();
-            }
+            // play or resume song
+            musicPlayer.playCurrentSong();
         });
         playbackBtns.add(playButton);
 
@@ -299,12 +281,9 @@ public class MusicPlayerGUI extends JFrame {
         JButton nextButton = new JButton(loadImage("src/assets/next.png"));
         nextButton.setBorderPainted(false);
         nextButton.setBackground(null);
-        nextButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // go to the next song
-                musicPlayer.nextSong();
-            }
+        nextButton.addActionListener(e -> {
+            // go to the next song
+            musicPlayer.nextSong();
         });
         playbackBtns.add(nextButton);
 
@@ -328,15 +307,15 @@ public class MusicPlayerGUI extends JFrame {
         // create the song length label
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 
-        // beginning will be 00:00
-        JLabel labelBeginning = new JLabel("00:00");
-        labelBeginning.setFont(new Font("Dialog", Font.BOLD, 18));
-        labelBeginning.setForeground(TEXT_COLOR);
+//         beginning will be 00:00
+        JLabel labelBeginning = new JLabel();
+//        labelBeginning.setFont(new Font("Dialog", Font.BOLD, 18));
+//        labelBeginning.setForeground(TEXT_COLOR);
 
         // end will vary depending on the song
         JLabel labelEnd =  new JLabel(song.getSongLength());
-        labelEnd.setFont(new Font("Dialog", Font.BOLD, 18));
-        labelEnd.setForeground(TEXT_COLOR);
+//        labelEnd.setFont(new Font("Dialog", Font.BOLD, 18));
+//        labelEnd.setForeground(TEXT_COLOR);
 
         labelTable.put(0, labelBeginning);
         labelTable.put(song.getMp3File().getFrameCount(), labelEnd);

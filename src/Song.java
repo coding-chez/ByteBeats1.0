@@ -1,10 +1,10 @@
-import com.mpatric.mp3agic.Mp3File;
-import org.jaudiotagger.audio.AudioFile;
+import com.mpatric.mp3agic.Mp3File;     // Reads and analyzes MP3 files to get details like frame count, duration, etc.
+import org.jaudiotagger.tag.FieldKey;//Helps specify the type of metadata to retrieve (e.g., title, artist).
+import org.jaudiotagger.audio.AudioFile; //used to read and access metadata like song title and artist from audio files.
 import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
 
-import java.io.File;
+import java.io.File; //Handles file paths and operations in Java.
 
 // class used to describe a song
 public class Song {
@@ -16,7 +16,7 @@ public class Song {
     private double frameRatePerMilliseconds;
 
     public Song(String filePath){
-        this.filePath = filePath;
+        this.filePath = filePath; //Loads the MP3 file from the given path and analyzes it.
         try {
             mp3File = new Mp3File(filePath);
             frameRatePerMilliseconds = (double) mp3File.getFrameCount() / mp3File.getLengthInMilliseconds();
@@ -34,14 +34,12 @@ public class Song {
             if (songTitle == null || songTitle.isEmpty()) {
                 songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
             }
-            if (songArtist == null || songArtist.isEmpty()) {
-                songArtist = "Unknown Artist";
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
             // Set reasonable default values when an exception occurs
             songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
-            songArtist = "Unknown Artist";
+            songArtist = null;
 
             // Set a default song length as '00:00' in case of failure to read duration
             songLength = "00:00";
