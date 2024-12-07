@@ -11,9 +11,8 @@ import java.io.File;
 import java.util.Hashtable;
 
 public class MusicPlayerGUI extends JFrame {
-    // color configurations
 
-    //Tcolors of the frame and user interface
+    //colors of the frame and user interface
     public static final Color FRAME_COLOR = Color.BLACK;
     public static final Color TEXT_COLOR = Color.WHITE;
 
@@ -42,7 +41,7 @@ public class MusicPlayerGUI extends JFrame {
         jFileChooser.setFileFilter(new FileNameExtensionFilter("MP3", "mp3"));
 
         // Initialize and position the timer label properly
-        timerLabel = new JLabel("00:00 / 00:00");
+        timerLabel = new JLabel(" ");
         timerLabel.setFont(new Font("Dialog", Font.BOLD, 16));
         timerLabel.setForeground(TEXT_COLOR);
         timerLabel.setBounds(getWidth()/2 - 100/2, 340, 100, 20);
@@ -64,9 +63,12 @@ public class MusicPlayerGUI extends JFrame {
         addToolbar();
 
         // load record image
-        JLabel songImage = new JLabel(loadImage("src/assets/vinyl.png"));
-        songImage.setBounds(10, 20, getWidth() - 35/2, 210);
+        JLabel songImage = new JLabel(loadImage("src/assets/bytebeats.png"));
+        int imageSize = 250; // Original size of the image
+        int xPosition = (getWidth() - imageSize) / 2; // Center the image horizontally
+        songImage.setBounds(xPosition, 30, imageSize, imageSize); // Position the image with spacing above
         add(songImage);
+
 
         musicPlayer.addSongTimeListener(currentTime -> {
             updateTimerLabel(currentTime);
@@ -178,9 +180,10 @@ public class MusicPlayerGUI extends JFrame {
                 // Create a Song object based on the selected file path
                 Song song = new Song(selectedFile.getPath());
 
-                // Debugging: Print song details
-                System.out.println("Loaded song: " + song.getSongTitle() + " by " + song.getSongArtist());
+//
+                //System.out.println();
                 System.out.println("Song Duration: " + song.getSongLength());
+
 
                 // Load the song into the music player
                 musicPlayer.loadSong(song);
@@ -234,7 +237,7 @@ public class MusicPlayerGUI extends JFrame {
 
     private void addPlaybackBtns(){
         playbackBtns = new JPanel();
-        playbackBtns.setBounds(0, 435, getWidth() - 10, 80);
+        playbackBtns.setBounds(0, 430, getWidth() - 10, 90);
         playbackBtns.setBackground(null);
 
         // previous button

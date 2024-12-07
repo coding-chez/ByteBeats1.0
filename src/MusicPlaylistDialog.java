@@ -10,15 +10,11 @@ import java.util.ArrayList;
 
 public class MusicPlaylistDialog extends JDialog {
     private MusicPlayerGUI musicPlayerGUI;
-
-    // store all of the paths to be written to a txt file (when we load a playlist)
     private ArrayList<String> songPaths;
 
     public MusicPlaylistDialog(MusicPlayerGUI musicPlayerGUI){
         this.musicPlayerGUI = musicPlayerGUI;
         songPaths = new ArrayList<>();
-
-
 
         // configure dialog
         setTitle("Create Playlist");
@@ -30,6 +26,10 @@ public class MusicPlaylistDialog extends JDialog {
         setLocationRelativeTo(musicPlayerGUI);
 
         addDialogComponents();
+    }
+
+    public MusicPlaylistDialog(MusicPlaylistDialog musicPlaylistDialog) {
+
     }
 
     private void addDialogComponents(){
@@ -70,6 +70,12 @@ public class MusicPlaylistDialog extends JDialog {
             }
         });
         add(addSongButton);
+
+        JButton openPlaylistButton = new JButton("Open Playlist");
+        openPlaylistButton.addActionListener(e -> {
+            new MusicPlaylistDialog(this).setVisible(true);
+        });
+        add(openPlaylistButton);
 
         // save playlist button
         JButton savePlaylistButton = new JButton("Save");
