@@ -86,7 +86,7 @@ public class MusicPlayerGUI extends JFrame {
         // song artist
         songArtist = new JLabel("Artist");
         songArtist.setBounds(0, 315, getWidth() - 10, 30);
-        songArtist.setFont(new Font("Dialog", Font.PLAIN, 24));
+        songArtist.setFont(new Font("Dialog", Font.PLAIN, 20));
         songArtist.setForeground(TEXT_COLOR);
         songArtist.setHorizontalAlignment(SwingConstants.CENTER);
         add(songArtist);
