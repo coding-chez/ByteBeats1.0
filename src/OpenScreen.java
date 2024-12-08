@@ -59,7 +59,6 @@ public class OpenScreen extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g;
-            // Create a gradient from light blue to dark blue
             GradientPaint gradient = new GradientPaint(
                     0, 0, new Color(59, 128, 194), 
                     0, getHeight(), new Color(200, 200, 228) 
