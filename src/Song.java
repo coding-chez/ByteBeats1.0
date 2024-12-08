@@ -1,10 +1,10 @@
-import com.mpatric.mp3agic.Mp3File;     // Reads and analyzes MP3 files to get details like frame count, duration, etc.
-import org.jaudiotagger.tag.FieldKey;//Helps specify the type of metadata to retrieve (e.g., title, artist).
-import org.jaudiotagger.audio.AudioFile; //used to read and access metadata like song title and artist from audio files.
+import com.mpatric.mp3agic.Mp3File;           // Reads and analyzes MP3 files to get details like frame count, duration, etc.
+import org.jaudiotagger.tag.FieldKey;        //Helps specify the type of metadata to retrieve (e.g., title, artist).
+import org.jaudiotagger.audio.AudioFile;     //used to read and access metadata like song title and artist from audio files.
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.Tag;
 
-import java.io.File; //Handles file paths and operations in Java.
+import java.io.File; 
 
 // class used to describe a song
 public class Song {
@@ -64,60 +64,6 @@ public class Song {
                     songArtist = "Unknown Artist"; // Default artist value
                 }
 
-                // Print default values to terminal
-               // System.out.println("Loaded song: " + songTitle + " - " + songArtist);
-
-//            Tag tag = audioFile.getTag();
-//            if (tag != null) {
-//                songTitle = tag.getFirst(FieldKey.TITLE);
-//                songArtist = tag.getFirst(FieldKey.ARTIST);
-//            }
-//            if (songTitle == null || songTitle.isEmpty()) {
-//                songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
-//            }
-//
-//            // Append the artist name after "by" if available
-//            if (songArtist != null && !songArtist.isEmpty()) {
-//                songTitle = songTitle + " - " + songArtist;
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            // Set reasonable default values when an exception occurs
-//            String fileName = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Remove file extension
-//            if (fileName.contains(" - ")) {
-//                String[] parts = fileName.split(" - ", 2); // Split at the first occurrence of " - "
-//                songTitle = parts[0].trim();  // Title is the part before " - "
-//                songArtist = parts[1].trim(); // Artist is the part after " - "
-//            } else {
-//                songTitle = fileName;         // Use entire file name as title if no " - " is found
-//                songArtist = "Unknown Artist"; // Default artist value
-//            }
-
-//        try {
-//            mp3File = new Mp3File(filePath);
-//            frameRatePerMilliseconds = (double) mp3File.getFrameCount() / mp3File.getLengthInMilliseconds();
-//            songLength = convertToSongLengthFormat();  // Will correctly set the song length
-//
-//            // use the jaudiotagger library to create an audiofile obj to read mp3 file's information
-//            AudioFile audioFile = AudioFileIO.read(new File(filePath));
-//
-//            // read through the meta data of the audio file
-//            Tag tag =  audioFile.getTag();
-//            if(tag != null) {
-//                songTitle = tag.getFirst(FieldKey.TITLE);
-//                songArtist = tag.getFirst(FieldKey.ARTIST);
-//            }
-//            if (songTitle == null || songTitle.isEmpty()) {
-//                songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            // Set reasonable default values when an exception occurs
-//            songTitle = new File(filePath).getName().replaceFirst("[.][^.]+$", ""); // Use filename as title
-//            songArtist = null;
-
             // Set a default song length as '00:00' in case of failure to read duration
             songLength = "00:00";
             frameRatePerMilliseconds = 0;
@@ -161,19 +107,3 @@ public class Song {
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
