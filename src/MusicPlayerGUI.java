@@ -51,12 +51,6 @@ public class MusicPlayerGUI extends JFrame {
         addGuiComponents();
     }
 
-//    public void updateDisplayTimer(int minutes, int seconds) {
-//        if (timerLabel != null) {
-//            String formattedTime = String.format("%02d:%02d", minutes, seconds);
-//            SwingUtilities.invokeLater(() -> timerLabel.setText(formattedTime));
-//        }
-//    }
 
     private void addGuiComponents(){
         // add toolbar
@@ -377,12 +371,3 @@ public class MusicPlayerGUI extends JFrame {
     }
 
 }
-
-
-
-
-
-
-
-
-
