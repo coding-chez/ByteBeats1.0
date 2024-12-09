@@ -33,7 +33,8 @@ By combining MVC with the Factory Method pattern, ByteBeats achieves:
 
 ---
 <div align="center">
-<img width="591" alt="Screen Shot 2024-12-08 at 1 20 45 AM" src="https://github.com/user-attachments/assets/3265cb2a-0f7f-4c8c-961d-236edd1ea77b"><img width="613" alt="Screen Shot 2024-12-09 at 6 58 14 PM" src="https://github.com/user-attachments/assets/fb657db8-3ace-4cf6-9998-4c00b15e698f">
+<img width="613" alt="Screen Shot 2024-12-09 at 6 58 14 PM" src="https://github.com/user-attachments/assets/fb657db8-3ace-4cf6-9998-4c00b15e698f">
+<img width="591" alt="Screen Shot 2024-12-08 at 1 20 45 AM" src="https://github.com/user-attachments/assets/3265cb2a-0f7f-4c8c-961d-236edd1ea77b">
 </div>
 
 ### **Model**
