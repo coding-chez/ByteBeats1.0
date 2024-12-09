@@ -1,5 +1,5 @@
 <h1 align="center">
-⋆⸜ ｡°✩   ByteBeats Music Player   ✩°｡⋆⸜ 🎧 </h1>
+🎧⋆⸜ ｡°✩   ByteBeats Music Player   ✩°｡⋆⸜ 🎧 </h1>
 
 <h3 align="center">
 Where every byte is a beat...
@@ -76,7 +76,7 @@ By using the MVC design pattern in ByteBeats, we were able to:
 
 ---
 
-By combining the principles of MVC and the Factory Method design pattern, ByteBeats showcases a robust, scalable, and user-friendly music player application built on solid software design foundations. 
+By combining the principles of MVC and the Factory Method design pattern, ByteBeats showcases a scalable, and user-friendly music player application built on solid software design foundations. 
 
 ### **LABAN GROUP 1!**
 
