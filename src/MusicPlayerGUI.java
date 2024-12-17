@@ -11,9 +11,10 @@ import java.io.File;
 import java.util.Hashtable;
 
 public class MusicPlayerGUI extends JFrame {
-    // color configurations
-    public static final Color FRAME_COLOR = Color.WHITE;
-    public static final Color TEXT_COLOR = Color.BLACK;
+
+    //colors of the frame and user interface
+    public static final Color FRAME_COLOR = Color.BLACK;
+    public static final Color TEXT_COLOR = Color.WHITE;
 
     private MusicPlayer musicPlayer;
 
@@ -23,50 +24,50 @@ public class MusicPlayerGUI extends JFrame {
     private JLabel songTitle, songArtist;
     private JPanel playbackBtns;
     private JSlider playbackSlider;
+    private JLabel timerLabel;
 
     public MusicPlayerGUI(){
-        // calls JFrame constructor to configure out gui and set the title heaader to "Music Player"
         super("Byte Beats");
-
-        // set the width and height
         setSize(400, 600);
-
-        // end process when app is closed
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-
-        // launch the app at the center of the screen
         setLocationRelativeTo(null);
-
-        // prevent the app from being resized
         setResizable(false);
-
-        // set layout to null which allows us to control the (x, y) coordinates of our components
-        // and also set the height and width
         setLayout(null);
-
-        // change the frame color
         getContentPane().setBackground(FRAME_COLOR);
 
         musicPlayer = new MusicPlayer(this);
         jFileChooser = new JFileChooser();
-
-        // set a default path for file explorer
         jFileChooser.setCurrentDirectory(new File("src/assets"));
-
-        // filter file chooser to only see .mp3 files
         jFileChooser.setFileFilter(new FileNameExtensionFilter("MP3", "mp3"));
+
+        // Initialize and position the timer label properly
+        timerLabel = new JLabel(" ");
+        timerLabel.setFont(new Font("Dialog", Font.BOLD, 16));
+        timerLabel.setForeground(TEXT_COLOR);
+        timerLabel.setBounds(getWidth()/2 - 100/2, 340, 100, 20);
+        timerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        add(timerLabel);
 
         addGuiComponents();
     }
+
 
     private void addGuiComponents(){
         // add toolbar
         addToolbar();
 
         // load record image
-        JLabel songImage = new JLabel(loadImage("src/assets/vinyl.png"));
-        songImage.setBounds(10, 20, getWidth() - 35/2, 210);
+        JLabel songImage = new JLabel(loadImage("src/assets/bytebeats.png"));
+        int imageSize = 250; // Original size of the image
+        int xPosition = (getWidth() - imageSize) / 2; // Center the image horizontally
+        songImage.setBounds(xPosition, 30, imageSize, imageSize); // Position the image with spacing above
         add(songImage);
+
+
+        musicPlayer.addSongTimeListener(currentTime -> {
+            updateTimerLabel(currentTime);
+            updatePlaybackSliderPosition(currentTime);
+        });
 
         // song title
         songTitle = new JLabel("Song Title");
@@ -79,7 +80,7 @@ public class MusicPlayerGUI extends JFrame {
         // song artist
         songArtist = new JLabel("Artist");
         songArtist.setBounds(0, 315, getWidth() - 10, 30);
-        songArtist.setFont(new Font("Dialog", Font.PLAIN, 24));
+        songArtist.setFont(new Font("Dialog", Font.PLAIN, 20));
         songArtist.setForeground(TEXT_COLOR);
         songArtist.setHorizontalAlignment(SwingConstants.CENTER);
         add(songArtist);
@@ -120,6 +121,30 @@ public class MusicPlayerGUI extends JFrame {
 
         // playback buttons (i.e. previous, play, next)
         addPlaybackBtns();
+
+
+    }
+
+    private void updateTimerLabel(int currentTimeInMilli) {
+        if (musicPlayer.getCurrentSong() != null) {
+            long totalDurationInMilli = musicPlayer.getCurrentSong().getDurationInMilli();
+            int currentMinutes = currentTimeInMilli / 60000;
+            int currentSeconds = (currentTimeInMilli % 60000) / 1000;
+            int totalMinutes = (int)(totalDurationInMilli / 60000);
+            int totalSeconds = (int)((totalDurationInMilli % 60000) / 1000);
+
+            String timeString = String.format("%02d:%02d / %02d:%02d",
+                    currentMinutes, currentSeconds, totalMinutes, totalSeconds);
+
+            SwingUtilities.invokeLater(() -> timerLabel.setText(timeString));
+        }
+    }
+
+    private void updatePlaybackSliderPosition(int currentTimeInMilli) {
+        if (musicPlayer.getCurrentSong() != null) {
+            int frame = (int)(currentTimeInMilli * musicPlayer.getCurrentSong().getFrameRatePerMilliseconds());
+            SwingUtilities.invokeLater(() -> setPlaybackSliderValue(frame));
+        }
     }
 
     private void addToolbar(){
@@ -139,33 +164,36 @@ public class MusicPlayerGUI extends JFrame {
 
         // add the "load song" item in the songMenu
         JMenuItem loadSong = new JMenuItem("Load Song");
-        loadSong.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // an integer is returned to us to let us know what the user did
-                int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
-                File selectedFile = jFileChooser.getSelectedFile();
+        loadSong.addActionListener(e -> {
+            // Show the file chooser to select an MP3 file
+            int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
+            File selectedFile = jFileChooser.getSelectedFile();
 
-                // this means that we are also checking to see if the user pressed the "open" button
-                if(result == JFileChooser.APPROVE_OPTION && selectedFile != null){
-                    // create a song obj based on selected file
-                    Song song = new Song(selectedFile.getPath());
+            // If the user presses the "open" button and selects a valid file
+            if (result == JFileChooser.APPROVE_OPTION && selectedFile != null) {
+                // Create a Song object based on the selected file path
+                Song song = new Song(selectedFile.getPath());
 
-                    // load song in music player
-                    musicPlayer.loadSong(song);
+//
+                //System.out.println();
+                System.out.println("Song Duration: " + song.getSongLength());
 
-                    // update song title and artist
-                    updateSongTitleAndArtist(song);
 
-                    // update playback slider
-                    updatePlaybackSlider(song);
+                // Load the song into the music player
+                musicPlayer.loadSong(song);
 
-                    // toggle on pause button and toggle off play button
-                    enablePauseButtonDisablePlayButton();
-                }
+                // Update the song title and artist in the GUI
+                updateSongTitleAndArtist(song);
+
+                // Update the playback slider (this assumes it's implemented)
+                updatePlaybackSlider(song);
+
+                // Toggle on pause button and off play button
+                enablePauseButtonDisablePlayButton();
             }
         });
         songMenu.add(loadSong);
+
 
         // now we will add the playlist menu
         JMenu playlistMenu = new JMenu("Playlist");
@@ -173,33 +201,27 @@ public class MusicPlayerGUI extends JFrame {
 
         // then add the items to the playlist menu
         JMenuItem createPlaylist = new JMenuItem("Create Playlist");
-        createPlaylist.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // load music playlist dialog
-                new MusicPlaylistDialog(MusicPlayerGUI.this).setVisible(true);
-            }
+        createPlaylist.addActionListener(e -> {
+            // load music playlist dialog
+            new MusicPlaylistDialog(MusicPlayerGUI.this).setVisible(true);
         });
         playlistMenu.add(createPlaylist);
 
         JMenuItem loadPlaylist = new JMenuItem("Load Playlist");
-        loadPlaylist.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser jFileChooser = new JFileChooser();
-                jFileChooser.setFileFilter(new FileNameExtensionFilter("Playlist", "txt"));
-                jFileChooser.setCurrentDirectory(new File("src/assets"));
+        loadPlaylist.addActionListener(e -> {
+            JFileChooser jFileChooser = new JFileChooser();
+            jFileChooser.setFileFilter(new FileNameExtensionFilter("Playlist", "txt"));
+            jFileChooser.setCurrentDirectory(new File("src/assets"));
 
-                int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
-                File selectedFile = jFileChooser.getSelectedFile();
+            int result = jFileChooser.showOpenDialog(MusicPlayerGUI.this);
+            File selectedFile = jFileChooser.getSelectedFile();
 
-                if(result == JFileChooser.APPROVE_OPTION && selectedFile != null){
-                    // stop the music
-                    musicPlayer.stopSong();
+            if(result == JFileChooser.APPROVE_OPTION && selectedFile != null){
+                // stop the music
+                musicPlayer.stopSong();
 
-                    // load playlist
-                    musicPlayer.loadPlaylist(selectedFile);
-                }
+                // load playlist
+                musicPlayer.loadPlaylist(selectedFile);
             }
         });
         playlistMenu.add(loadPlaylist);
@@ -209,19 +231,16 @@ public class MusicPlayerGUI extends JFrame {
 
     private void addPlaybackBtns(){
         playbackBtns = new JPanel();
-        playbackBtns.setBounds(0, 435, getWidth() - 10, 80);
+        playbackBtns.setBounds(0, 430, getWidth() - 10, 90);
         playbackBtns.setBackground(null);
 
         // previous button
         JButton prevButton = new JButton(loadImage("src/assets/previous.png"));
         prevButton.setBorderPainted(false);
         prevButton.setBackground(null);
-        prevButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // go to the previous song
-                musicPlayer.prevSong();
-            }
+        prevButton.addActionListener(e -> {
+            // go to the previous song
+            musicPlayer.prevSong();
         });
         playbackBtns.add(prevButton);
 
@@ -229,15 +248,12 @@ public class MusicPlayerGUI extends JFrame {
         JButton playButton = new JButton(loadImage("src/assets/play.png"));
         playButton.setBorderPainted(false);
         playButton.setBackground(null);
-        playButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // toggle off play button and toggle on pause button
-                enablePauseButtonDisablePlayButton();
+        playButton.addActionListener(e -> {
+            // toggle off play button and toggle on pause button
+            enablePauseButtonDisablePlayButton();
 
-                // play or resume song
-                musicPlayer.playCurrentSong();
-            }
+            // play or resume song
+            musicPlayer.playCurrentSong();
         });
         playbackBtns.add(playButton);
 
@@ -262,12 +278,9 @@ public class MusicPlayerGUI extends JFrame {
         JButton nextButton = new JButton(loadImage("src/assets/next.png"));
         nextButton.setBorderPainted(false);
         nextButton.setBackground(null);
-        nextButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // go to the next song
-                musicPlayer.nextSong();
-            }
+        nextButton.addActionListener(e -> {
+            // go to the next song
+            musicPlayer.nextSong();
         });
         playbackBtns.add(nextButton);
 
@@ -291,15 +304,15 @@ public class MusicPlayerGUI extends JFrame {
         // create the song length label
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 
-        // beginning will be 00:00
-        JLabel labelBeginning = new JLabel("00:00");
-        labelBeginning.setFont(new Font("Dialog", Font.BOLD, 18));
-        labelBeginning.setForeground(TEXT_COLOR);
+//         beginning will be 00:00
+        JLabel labelBeginning = new JLabel();
+//        labelBeginning.setFont(new Font("Dialog", Font.BOLD, 18));
+//        labelBeginning.setForeground(TEXT_COLOR);
 
         // end will vary depending on the song
         JLabel labelEnd =  new JLabel(song.getSongLength());
-        labelEnd.setFont(new Font("Dialog", Font.BOLD, 18));
-        labelEnd.setForeground(TEXT_COLOR);
+//        labelEnd.setFont(new Font("Dialog", Font.BOLD, 18));
+//        labelEnd.setForeground(TEXT_COLOR);
 
         labelTable.put(0, labelBeginning);
         labelTable.put(song.getMp3File().getFrameCount(), labelEnd);
@@ -350,13 +363,11 @@ public class MusicPlayerGUI extends JFrame {
         // could not find resource
         return null;
     }
+
+    public void setTimerLabel(String time) {
+        if (timerLabel != null) {
+            SwingUtilities.invokeLater(() -> timerLabel.setText(time));
+        }
+    }
+
 }
-
-
-
-
-
-
-
-
-

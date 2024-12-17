@@ -2,299 +2,251 @@ import javazoom.jl.player.advanced.AdvancedPlayer;
 import javazoom.jl.player.advanced.PlaybackEvent;
 import javazoom.jl.player.advanced.PlaybackListener;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MusicPlayer extends PlaybackListener {
-    // this will be used to update isPaused more synchronously
     private static final Object playSignal = new Object();
-
-    // need reference so that we can update the gui in this class
     private MusicPlayerGUI musicPlayerGUI;
-
-    // we will need a way to store our song's details, so we will be creating a song class
     private Song currentSong;
-    public Song getCurrentSong(){
-        return currentSong;
-    }
-
     private ArrayList<Song> playlist;
-
-    // we will need to keep track the index we are in the playlist
     private int currentPlaylistIndex;
-
-    // use JLayer library to create an AdvancedPlayer obj which will handle playing the music
     private AdvancedPlayer advancedPlayer;
-
-    // pause boolean flag used to indicate whether the player has been paused
     private boolean isPaused;
-
-    // boolean flag used to tell when the song has finished
     private boolean songFinished;
-
     private boolean pressedNext, pressedPrev;
-
-    // stores in teh last frame when the playback is finished (used for pausing and resuming)
     private int currentFrame;
-    public void setCurrentFrame(int frame){
-        currentFrame = frame;
-    }
-
-    // track how many milliseconds has passed since playing the song (used for updating the slider)
     private int currentTimeInMilli;
-    public void setCurrentTimeInMilli(int timeInMilli){
-        currentTimeInMilli = timeInMilli;
-    }
+    private long pausedTime;
+    private List<SongTimeListener> songTimeListeners = new ArrayList<>();
 
-    // constructor
-    public MusicPlayer(MusicPlayerGUI musicPlayerGUI){
+    public MusicPlayer(MusicPlayerGUI musicPlayerGUI) {
         this.musicPlayerGUI = musicPlayerGUI;
     }
 
-    public void loadSong(Song song){
+    public Song getCurrentSong() {
+        return currentSong;
+    }
+
+    public void setCurrentFrame(int frame) {
+        currentFrame = frame;
+    }
+
+    public void setCurrentTimeInMilli(int timeInMilli) {
+        currentTimeInMilli = timeInMilli;
+    }
+
+    public void loadSong(Song song) {
         currentSong = song;
         playlist = null;
 
-        // stop the song if possible
-        if(!songFinished)
+        if (!songFinished) {
             stopSong();
+        }
 
-        // play the current song if not null
-        if(currentSong != null){
-            // reset frame
+        if (currentSong != null) {
             currentFrame = 0;
-
-            // reset current time in milli
             currentTimeInMilli = 0;
+            songFinished = false;
+            pausedTime = 0;
 
-            // update gui
-            musicPlayerGUI.setPlaybackSliderValue(0);
+            long songDurationInMilli = currentSong.getDurationInMilli();
+            String formattedDuration = formatTime(songDurationInMilli);
+
+            SwingUtilities.invokeLater(() -> {
+                musicPlayerGUI.setPlaybackSliderValue(0);
+                musicPlayerGUI.setTimerLabel("00:00 / " + formattedDuration);
+            });
 
             playCurrentSong();
         }
     }
 
-    public void loadPlaylist(File playlistFile){
+    private String formatTime(long timeInMilli) {
+        long totalSeconds = timeInMilli / 1000;
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
+
+    public void loadPlaylist(File playlistFile) {
         playlist = new ArrayList<>();
 
-        // store the paths from the text file into the playlist array list
-        try{
-            FileReader fileReader = new FileReader(playlistFile);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-
-            // reach each line from the text file and store the text into the songPath variable
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(playlistFile))) {
             String songPath;
-            while((songPath = bufferedReader.readLine()) != null){
-                // create song object based on song path
+            while ((songPath = bufferedReader.readLine()) != null) {
                 Song song = new Song(songPath);
-
-                // add to playlist array list
                 playlist.add(song);
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        if(playlist.size() > 0){
-            // reset playback slider
+        if (playlist.size() > 0) {
             musicPlayerGUI.setPlaybackSliderValue(0);
             currentTimeInMilli = 0;
-
-            // update current song to the first song in the playlist
             currentSong = playlist.get(0);
-
-            // start from the beginning frame
             currentFrame = 0;
+            pausedTime = 0;
 
-            // update gui
             musicPlayerGUI.enablePauseButtonDisablePlayButton();
             musicPlayerGUI.updateSongTitleAndArtist(currentSong);
             musicPlayerGUI.updatePlaybackSlider(currentSong);
 
-            // start song
             playCurrentSong();
         }
     }
 
-    public void pauseSong(){
-        if(advancedPlayer != null){
-            // update isPaused flag
+    public void pauseSong() {
+        if (advancedPlayer != null) {
             isPaused = true;
-
-            // then we want to stop the player
+            pausedTime = currentTimeInMilli;
             stopSong();
         }
     }
 
-    public void stopSong(){
-        if(advancedPlayer != null){
+    public void stopSong() {
+        if (advancedPlayer != null) {
             advancedPlayer.stop();
             advancedPlayer.close();
             advancedPlayer = null;
         }
     }
 
-    public void nextSong(){
-        // no need to go to the next song if there is no playlist
-        if(playlist == null) return;
-
-        // check to see if we have reached the end of the playlist, if so then don't do anything
-        if(currentPlaylistIndex + 1 > playlist.size() - 1) return;
+    public void nextSong() {
+        if (playlist == null || currentPlaylistIndex + 1 > playlist.size() - 1) return;
 
         pressedNext = true;
+        if (!songFinished) stopSong();
 
-        // stop the song if possible
-        if(!songFinished)
-            stopSong();
-
-        // increase current playlist index
         currentPlaylistIndex++;
-
-        // update current song
         currentSong = playlist.get(currentPlaylistIndex);
-
-        // reset frame
         currentFrame = 0;
-
-        // reset current time in milli
         currentTimeInMilli = 0;
+        pausedTime = 0;
 
-        // update gui
         musicPlayerGUI.enablePauseButtonDisablePlayButton();
         musicPlayerGUI.updateSongTitleAndArtist(currentSong);
         musicPlayerGUI.updatePlaybackSlider(currentSong);
 
-        // play the song
         playCurrentSong();
     }
 
-    public void prevSong(){
-        // no need to go to the next song if there is no playlist
-        if(playlist == null) return;
-
-        // check to see if we can go to the previous song
-        if(currentPlaylistIndex - 1 < 0) return;
+    public void prevSong() {
+        if (playlist == null || currentPlaylistIndex - 1 < 0) return;
 
         pressedPrev = true;
+        if (!songFinished) stopSong();
 
-        // stop the song if possible
-        if(!songFinished)
-            stopSong();
-
-        // decrease current playlist index
         currentPlaylistIndex--;
-
-        // update current song
         currentSong = playlist.get(currentPlaylistIndex);
-
-        // reset frame
         currentFrame = 0;
-
-        // reset current time in milli
         currentTimeInMilli = 0;
+        pausedTime = 0;
 
-        // update gui
         musicPlayerGUI.enablePauseButtonDisablePlayButton();
         musicPlayerGUI.updateSongTitleAndArtist(currentSong);
         musicPlayerGUI.updatePlaybackSlider(currentSong);
 
-        // play the song
         playCurrentSong();
     }
 
-    public void playCurrentSong(){
-        if(currentSong == null) return;
+    public void playCurrentSong() {
+        if (currentSong == null) return;
 
-        try{
-            // read mp3 audio data
+        try {
             FileInputStream fileInputStream = new FileInputStream(currentSong.getFilePath());
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
-            // create a new advanced player
             advancedPlayer = new AdvancedPlayer(bufferedInputStream);
             advancedPlayer.setPlayBackListener(this);
 
-            // start music
             startMusicThread();
-
-            // start playback slider thread
             startPlaybackSliderThread();
-
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // create a thread that will handle playing the music
-    private void startMusicThread(){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    if(isPaused){
-                        synchronized(playSignal){
-                            // update flag
-                            isPaused = false;
-
-                            // notify the other thread to continue (makes sure that isPaused is updated to false properly)
-                            playSignal.notify();
-                        }
-
-                        // resume music from last frame
-                        advancedPlayer.play(currentFrame, Integer.MAX_VALUE);
-                    }else{
-                        // play music from the beginning
-                        advancedPlayer.play();
+    private void startMusicThread() {
+        new Thread(() -> {
+            try {
+                if (isPaused) {
+                    synchronized (playSignal) {
+                        isPaused = false;
+                        playSignal.notify();
                     }
-                }catch(Exception e){
-                    e.printStackTrace();
+                    advancedPlayer.play(currentFrame, Integer.MAX_VALUE);
+                } else {
+                    advancedPlayer.play();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }).start();
     }
 
-    // create a thread that will handle updating the slider
-    private void startPlaybackSliderThread(){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if(isPaused){
-                    try{
-                        // wait till it gets notified by other thread to continue
-                        // makes sure that isPaused boolean flag updates to false before continuing
-                        synchronized(playSignal){
-                            playSignal.wait();
-                        }
-                    }catch(Exception e){
-                        e.printStackTrace();
+
+    private void startPlaybackSliderThread() {
+        Thread sliderThread = new Thread(() -> {
+            if (isPaused) {
+                try {
+                    synchronized (playSignal) {
+                        playSignal.wait();
                     }
-                }
-
-                while(!isPaused && !songFinished && !pressedNext && !pressedPrev){
-                    try{
-                        // increment current time milli
-                        currentTimeInMilli++;
-
-                        // calculate into frame value
-                        int calculatedFrame = (int) ((double) currentTimeInMilli * 2.08 * currentSong.getFrameRatePerMilliseconds());
-
-                        // update gui
-                        musicPlayerGUI.setPlaybackSliderValue(calculatedFrame);
-
-                        // mimic 1 millisecond using thread.sleep
-                        Thread.sleep(1);
-                    }catch(Exception e){
-                        e.printStackTrace();
-                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-        }).start();
+
+            long songLengthInMilli = currentSong.getMp3File().getLengthInMilliseconds();
+            long startTime = System.currentTimeMillis() - pausedTime;
+
+            while (!isPaused && !songFinished && !pressedNext && !pressedPrev) {
+                try {
+                    long currentTime = System.currentTimeMillis();
+                    currentTimeInMilli = (int)(currentTime - startTime);
+
+                    if (currentTimeInMilli >= songLengthInMilli) {
+                        break;
+                    }
+
+                    int calculatedFrame = (int)((double) currentTimeInMilli * currentSong.getFrameRatePerMilliseconds());
+
+                    SwingUtilities.invokeLater(() -> {
+                        musicPlayerGUI.setPlaybackSliderValue(calculatedFrame);
+                        String currentTimeStr = formatTime(currentTimeInMilli);
+                        String totalTimeStr = formatTime(songLengthInMilli);
+                        musicPlayerGUI.setTimerLabel(currentTimeStr + " / " + totalTimeStr);
+                        notifySongTimeListeners(currentTimeInMilli);
+                    });
+
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (!isPaused && !pressedNext && !pressedPrev) {
+                SwingUtilities.invokeLater(() -> {
+                    String totalTimeStr = formatTime(songLengthInMilli);
+                    musicPlayerGUI.setTimerLabel(totalTimeStr + " / " + totalTimeStr);
+                    musicPlayerGUI.setPlaybackSliderValue((int)(songLengthInMilli * currentSong.getFrameRatePerMilliseconds()));
+                });
+            }
+        });
+
+        sliderThread.setDaemon(true);
+        sliderThread.start();
     }
 
     @Override
     public void playbackStarted(PlaybackEvent evt) {
-        // this method gets called in the beginning of the song
-        System.out.println("Playback Started");
         songFinished = false;
         pressedNext = false;
         pressedPrev = false;
@@ -302,50 +254,34 @@ public class MusicPlayer extends PlaybackListener {
 
     @Override
     public void playbackFinished(PlaybackEvent evt) {
-        // this method gets called when the song finishes or if the player gets closed
-        System.out.println("Playback Finished");
-        if(isPaused){
-            currentFrame += (int) ((double) evt.getFrame() * currentSong.getFrameRatePerMilliseconds());
-        }else{
-            // if the user pressed next or prev we don't need to execute the rest of the code
-            if(pressedNext || pressedPrev) return;
+        if (isPaused) {
+            currentFrame += (int)((double) evt.getFrame() * currentSong.getFrameRatePerMilliseconds());
+        } else {
+            if (pressedNext || pressedPrev) return;
 
-            // when the song ends
             songFinished = true;
 
-            if(playlist == null){
-                // update gui
+            if (playlist == null) {
                 musicPlayerGUI.enablePlayButtonDisablePauseButton();
-            }else{
-                // last song in the playlist
-                if(currentPlaylistIndex == playlist.size() - 1){
-                    // update gui
-                    musicPlayerGUI.enablePlayButtonDisablePauseButton();
-                }else{
-                    // go to the next song in the playlist
-                    nextSong();
-                }
+            } else if (currentPlaylistIndex == playlist.size() - 1) {
+                musicPlayerGUI.enablePlayButtonDisablePauseButton();
+            } else {
+                nextSong();
             }
         }
     }
+
+    public interface SongTimeListener {
+        void onSongTimeUpdate(int currentTimeInMilli);
+    }
+
+    public void addSongTimeListener(SongTimeListener listener) {
+        songTimeListeners.add(listener);
+    }
+
+    private void notifySongTimeListeners(int currentTimeInMilli) {
+        for (SongTimeListener listener : songTimeListeners) {
+            listener.onSongTimeUpdate(currentTimeInMilli);
+        }
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
